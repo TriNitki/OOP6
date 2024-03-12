@@ -1,0 +1,14 @@
+C:\Users\fsb20\source\repos\OOP6\OOP6\bin\Debug\net7.0\OOP6.exe
+C:\Users\fsb20\source\repos\OOP6\OOP6\bin\Debug\net7.0\OOP6.deps.json
+C:\Users\fsb20\source\repos\OOP6\OOP6\bin\Debug\net7.0\OOP6.runtimeconfig.json
+C:\Users\fsb20\source\repos\OOP6\OOP6\bin\Debug\net7.0\OOP6.dll
+C:\Users\fsb20\source\repos\OOP6\OOP6\bin\Debug\net7.0\OOP6.pdb
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\OOP6.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\OOP6.AssemblyInfoInputs.cache
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\OOP6.AssemblyInfo.cs
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\OOP6.csproj.CoreCompileInputs.cache
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\OOP6.dll
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\refint\OOP6.dll
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\OOP6.pdb
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\OOP6.genruntimeconfig.cache
+C:\Users\fsb20\source\repos\OOP6\OOP6\obj\Debug\net7.0\ref\OOP6.dll
