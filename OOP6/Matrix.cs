@@ -1,40 +1,21 @@
 ﻿using System.Collections;
+using System.Text;
 
 namespace OOP6;
 
-public unsafe class Matrix : IEnumerable<Matrix>, ICloneable
+public unsafe class Matrix : IFormattable, IEnumerable<double>, ICloneable, IComparable<Matrix>
 {
-    private int _rows { get; set; }
-    private int _cols { get; set; }
-    private double[] _data { get; set; }
-    private int _id { get; init; }
+    private static int _idCounter = 0;
 
-    private class Row
-    {
-        private double* _data { get; set; }
-        private int _size { get; init; }
+    private uint _rows;
+    private uint _cols;
+    private double[][] _data;
+    private int _id;
 
-        public Row(int size, double* values)
-        {
-            _size = size;
-            _data = values;
-        }
+    public uint Rows { get => _rows; }
+    public uint Cols { get => _cols; }
 
-        public double this[int col]
-        {
-            get
-            {
-                return _data[col];
-            }
-
-            set
-            {
-                _data[col] = value;
-            }
-        }
-    }
-
-    public Matrix(int otherSize, double[] values) 
+    public Matrix(uint otherSize, double[][] values) 
         : this(otherSize, otherSize, values)
     { }
 
@@ -42,28 +23,25 @@ public unsafe class Matrix : IEnumerable<Matrix>, ICloneable
         : this(other._rows, other._cols, other._data)
     { }
 
-    public Matrix(int rows = 0, int cols = 0, double[]? values = null)
+    public Matrix(uint rows = 0, uint cols = 0, double[][]? values = null)
     {
-        if (rows < 0)
-            throw new ArgumentOutOfRangeException(nameof(rows), "Number of rows cannot be less than 0");
-
-        if (cols < 0)
-            throw new ArgumentOutOfRangeException(nameof(cols), "Number of columns cannot be less than 0");
-
         _rows = rows;
         _cols = cols;
 
-        _data = new double[rows * cols];
+        _data = new double[rows][];
+
+        for (int i = 0; i < rows; i++)
+        {
+            _data[i] = new double[cols];
+        }
 
         if (values != null)
         {
-            for (int i = 0; i < rows * cols; i++)
-            {
-                _data[i] = values[i];
-            }
+            _data = values;
         }
 
-        _id = Global.Counter;
+        _id = _idCounter++;
+
         Console.WriteLine($"Constructor for matrix {_id}");
     }
 
@@ -72,29 +50,34 @@ public unsafe class Matrix : IEnumerable<Matrix>, ICloneable
         Console.WriteLine($"Distructor for matrix {_id}");
     }
 
-    public object Clone()
-    {
-        throw new NotImplementedException();
-    }
-
-    public IEnumerator<Matrix> GetEnumerator()
-    {
-        throw new NotImplementedException();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        throw new NotImplementedException();
-    }
-
-    public int getRows()
+    public uint getRows()
     {
         return _rows;
     }
 
-    public int getCols()
+    public uint getCols()
     {
         return _cols;
+    }
+
+    public void setRows(uint rows)
+    {
+        _rows = rows;
+    }
+
+    public void setCols(uint cols) 
+    {
+        _cols = cols;
+    }
+
+    public void setData(double[][] data)
+    {
+        _data = data;
+    }
+
+    public double getValue(uint index) 
+    {
+        return _data[index / _cols][index % _cols];
     }
 
     public double max()
@@ -102,13 +85,13 @@ public unsafe class Matrix : IEnumerable<Matrix>, ICloneable
         if (_rows <= 0 || _cols <= 0 || _data == null)
             throw new InvalidDataException("Can not get max value from empty matrix");
 
-        var maxVal = _data[0];
+        var maxVal = _data[0][0];
 
-        for (int i = 1; i < _rows * _cols; i++)
+        for (uint i = 1; i < _rows * _cols; i++)
         {
-            if (maxVal < _data[i])
+            if (maxVal < getValue(i))
             {
-                maxVal = _data[i];
+                maxVal = getValue(i);
             }
         }
 
@@ -120,13 +103,13 @@ public unsafe class Matrix : IEnumerable<Matrix>, ICloneable
         if (_rows <= 0 || _cols <= 0 || _data == null)
             throw new InvalidDataException("Can not get min value from empty matrix");
 
-        var minVal = _data[0];
+        var minVal = _data[0][0];
 
-        for (int i = 1; i < _rows * _cols; i++)
+        for (uint i = 1; i < _rows * _cols; i++)
         {
-            if (minVal > _data[i])
+            if (minVal > getValue(i))
             {
-                minVal = _data[i];
+                minVal = getValue(i);
             }
         }
 
@@ -143,32 +126,165 @@ public unsafe class Matrix : IEnumerable<Matrix>, ICloneable
         return first.getRows() == second.getRows() && first.getCols() == second.getCols();
     }
 
-    public double this[int row]
+    public static Matrix operator +(Matrix first, Matrix second)
+    {
+        if (!canSum(first, second))
+            throw new ArgumentException("Matrices have different dimensions");
+
+        uint rows = first.getRows();
+        uint cols = first.getCols();
+
+
+        for (uint i = 0; i < rows; i++)
+        {
+            for (uint j = 0; j < cols; j++)
+            {
+                first[i][j] += second[i][j];
+            }
+        }
+
+        return first;
+    }
+
+    public static Matrix operator -(Matrix first, Matrix second)
+    {
+        if (!canSum(first, second))
+            throw new ArgumentException("Matrices have different dimensions");
+
+        uint rows = first.getRows();
+        uint cols = first.getCols();
+
+
+        for (uint i = 0; i < rows; i++)
+        {
+            for (uint j = 0; j < cols; j++)
+            {
+                first[i][j] -= second[i][j];
+            }
+        }
+
+        return first;
+    }
+
+    public static Matrix operator *(Matrix first, Matrix second)
+    {
+        if (!canMul(first, second))
+            throw new ArgumentException("Columns of the first matrix must be equal to rows of the second matrix");
+
+        uint rows = first.getRows();
+        uint cols = second.getCols();
+
+        var sum = 0.0;
+        var resultData = new double[rows][];
+
+        for (int i = 0; i < rows; i++)
+        {
+            resultData[i] = new double[cols];
+        }
+
+        for (uint i = 0; i < rows; i++)
+        {
+            for (uint j = 0; j < cols; j++)
+            {
+                for (uint k = 0; k < cols; k++)
+                    sum += first[i][k] * second[k][j];
+                resultData[i][j] = sum;
+                sum = 0.0;
+            }
+        }
+
+        first.setCols(cols);
+        first.setRows(rows);
+        first.setData(resultData);
+
+        return first;
+    }
+
+    public static Matrix operator *(Matrix first, int scalar)
+    {
+        uint rows = first.getRows();
+        uint cols = first.getCols();
+
+
+        for (uint i = 0; i < rows; i++)
+        {
+            for (uint j = 0; j < cols; j++)
+            {
+                first[i][j] *= scalar;
+            }
+        }
+
+        return first;
+    }
+
+    public double[] this[uint index]
     {
         get
         {
-            return Row(_cols, &_data[row * _cols]);
+            if (index >= _rows)
+                throw new IndexOutOfRangeException("Index out of range");
+
+            return _data[index];
         }
 
-        //set
-        //{
-        //    _data[row] = value;
-        //}
+        set
+        {
+            if (index >= _rows)
+                throw new IndexOutOfRangeException("Index out of range");
+
+            _data[index] = value;
+        }
     }
 
-    public override string ToString()
+    public object Clone()
     {
-        string output = string.Empty; 
+        return MemberwiseClone();
+    }
+
+    public IEnumerator<double> GetEnumerator()
+    {
+        for (uint i = 0; i < _rows; i++)
+        {
+            for (uint j = 0; j < _cols; j++)
+            {
+                yield return _data[i][j];
+            }
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    public int CompareTo(Matrix? other)
+    {
+        if (!(other is Matrix))
+            throw new ArgumentException("Incorrect type");
+
+        uint thisSize = getCols() * getRows();
+        uint otherSize = other.getCols() * other.getRows();
+
+        return thisSize.CompareTo(otherSize);
+    }
+
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        if (format == null)
+            format = "{0,5}";
+
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine($"Matrix {_id}:");
 
         for (int i = 0; i < _rows; i++)
         {
             for (int j = 0; j < _cols; j++)
             {
-                output += string.Format("{0, 5}", _data[(i * _cols) + j]);
+                sb.AppendFormat(format, _data[i][j]);
             }
-            output += "\n";
+            sb.AppendLine();
         }
 
-        return output;
+        return sb.ToString();
     }
 }
